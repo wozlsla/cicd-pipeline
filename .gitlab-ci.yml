@@ -1,0 +1,47 @@
+stages:          # List of stages for jobs, and their order of execution
+  - build
+  - test
+  - deploy
+
+build-job:       # This job runs in the build stage, which runs first.
+  stage: build
+  image: docker:latest  # Docker CLI가 포함된 이미지 사용
+  services:
+    - docker:dind       # Docker-in-Docker 서비스
+  variables:
+    DOCKER_HOST: tcp://docker:2375  # Docker 데몬과 통신
+    DOCKER_TLS_CERTDIR: ""          # Docker TLS 비활성화
+    GIT_STRATEGY: clone             # 항상 리포지토리를 새로 복제
+  before_script:
+    - apk update && apk add git make aws-cli  # Alpine Linux에서 git과 make 설치 + aws-cli
+    - docker info  # Docker 데몬 상태 확인
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+  script:
+    - echo "Docker build start."
+    - make build
+    - echo "Docker build complete."
+    - echo "Docker push start.."
+    - make push
+    - echo "Docker push complete."
+
+unit-test-job:   # This job runs in the test stage.
+  stage: test    # It only starts when the job in the build stage completes successfully.
+  script:
+    - echo "Running unit tests."
+    - sleep 5
+    - echo "Unit tests complete."
+
+lint-test-job:   # This job also runs in the test stage.
+  stage: test    # It can run at the same time as unit-test-job (in parallel).
+  script:
+    - echo "Linting code... This will take about 10 seconds."
+    - sleep 10
+    - echo "No lint issues found."
+
+deploy-job:      # This job runs in the deploy stage.
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+  environment: production
+  script:
+    - echo "Deploying application..."
+    - echo "Application successfully deployed."
