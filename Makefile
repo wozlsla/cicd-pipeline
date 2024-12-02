@@ -11,3 +11,6 @@ push:
 	docker tag $(PRJ_NAME):$(VERSION) $(ECR_URI)/$(PRJ_NAME):latest
 	docker push $(ECR_URI)/$(PRJ_NAME):$(VERSION)
 	docker push $(ECR_URI)/$(PRJ_NAME):latest
+
+deploy:
+	aws ecs update-service --cluster test-app-cluster --service app-srv --task-definition test-app:1 --force-new-deployment
