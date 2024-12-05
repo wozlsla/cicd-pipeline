@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "<h2>Edited</h2>"
+    return "<h1> Pipeline Exception </h1>"
 
 
 if __name__ == "__main__":
